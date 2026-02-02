@@ -1,76 +1,57 @@
 #!/bin/bash
 set -e
 
+# Generate UUID for this job run
+JOB_ID=$(cat /proc/sys/kernel/random/uuid)
+echo "Job ID: ${JOB_ID}"
+
 # Validate Pi auth.json is mounted
 if [ ! -f /root/.pi/agent/auth.json ]; then
     echo "ERROR: auth.json not mounted at /root/.pi/agent/auth.json"
     exit 1
 fi
 
-# Validate anthropic key exists in auth.json
-if ! jq -e '.anthropic.key' /root/.pi/agent/auth.json > /dev/null 2>&1; then
-    echo "ERROR: anthropic.key not found in auth.json"
-    exit 1
+# Start Chrome headless
+chromium --headless --no-sandbox --disable-gpu --remote-debugging-port=9222 &
+CHROME_PID=$!
+sleep 2
+
+# Git setup
+git config --global user.name "popebot"
+git config --global user.email "popebot@example.com"
+if [ -n "$GITHUB_TOKEN" ]; then
+    git config --global credential.helper store
+    echo "https://${GITHUB_TOKEN}@github.com" > ~/.git-credentials
+    chmod 600 ~/.git-credentials
 fi
 
-# Set up git credentials from secrets.json
-if [ -f /app/secrets.json ]; then
-    GITHUB_TOKEN=$(jq -r '.github.token // empty' /app/secrets.json 2>/dev/null)
-    if [ -n "${GITHUB_TOKEN}" ]; then
-        git config --global credential.helper store
-        echo "https://${GITHUB_TOKEN}@github.com" > ~/.git-credentials
-        chmod 600 ~/.git-credentials
-    fi
+# Clone repo if REPO_URL set, otherwise assume /job is mounted
+if [ -n "$REPO_URL" ]; then
+    # Fast clone: single branch, shallow (depth 1)
+    git clone --single-branch --branch "$BRANCH" --depth 1 "${REPO_URL}" /job
+    cd /job
+else
+    cd /job
 fi
 
-# Configure git
-git config --global user.name "${GIT_USER_NAME:-popebot}"
-git config --global user.email "${GIT_USER_EMAIL:-popebot@example.com}"
+# Setup log directory
+LOG_DIR="/job/workspace/logs"
+mkdir -p "${LOG_DIR}"
 
-# Clone/checkout repo
-if [ -n "${REPO_URL}" ]; then
-    cd /workspace
-    [ -d ".git" ] && git fetch origin || git clone "${REPO_URL}" .
-    git checkout "${BRANCH:-main}" 2>/dev/null || git checkout -b "${BRANCH:-main}"
-    git pull origin "${BRANCH:-main}" 2>/dev/null || true
+# Run Pi (print mode - execute and exit)
+pi -p "$(cat /job/workspace/job.md)" --session-dir "${LOG_DIR}"
+
+# Rename Pi's session file to UUID.jsonl
+mv "${LOG_DIR}"/session-*.jsonl "${LOG_DIR}/${JOB_ID}.jsonl" 2>/dev/null || true
+
+# Commit and push results (only if cloned from remote)
+if [ -n "$REPO_URL" ]; then
+    git add workspace/logs/
+    git commit -m "popebot: job ${JOB_ID} completed" || true
+    git push
 fi
 
-# Build prompt from markdown files
-PROMPT=$(cat /app/AGENTS.md /app/SOUL.md /app/MEMORY.md /app/TOOLS.md /app/HEARTBEAT.md "/app/roles/${ROLE:-worker}.md" 2>/dev/null)
+# Cleanup
+kill $CHROME_PID 2>/dev/null || true
 
-# Append task if exists
-[ -f "/workspace/${TASK_FILE:-task.md}" ] && PROMPT="${PROMPT}
-
-## Current Task
-
-$(cat /workspace/${TASK_FILE:-task.md})"
-
-# Write prompt to file (avoids command line issues with multi-line strings)
-echo "${PROMPT}" > /tmp/prompt.txt
-
-# Create session directory for Pi's native logging
-SESSION_DIR="/workspace/.popebot/sessions"
-mkdir -p "${SESSION_DIR}"
-
-# Create runner script for tmux (avoids quoting issues)
-cat > /tmp/run-pi.sh << 'RUNNER'
-#!/bin/bash
-cd /workspace
-pi --session-dir /workspace/.popebot/sessions "$(cat /tmp/prompt.txt)"
-echo ""
-echo "=== Pi finished. Container will exit. ==="
-RUNNER
-chmod +x /tmp/run-pi.sh
-
-# Start tmux with bash, then run pi (so output is visible in terminal)
-cd /workspace
-tmux new-session -d -s popebot bash
-tmux send-keys -t popebot '/tmp/run-pi.sh; exit' Enter
-
-# Start ttyd for observation (background)
-ttyd -p 7681 -W tmux attach-session -t popebot &
-
-# Wait for Pi to finish, then exit
-while tmux has-session -t popebot 2>/dev/null; do
-    sleep 1
-done
+echo "Done. Job ID: ${JOB_ID}"
