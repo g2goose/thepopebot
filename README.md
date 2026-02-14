@@ -19,14 +19,14 @@
 ## How It Works
 
 ```
-┌───────────────────────────────────────────────────────────────────────┐
-│                                                                       │
+┌──────────────────────────────────────────────────────────────────────┐
+│                                                                      │
 │  ┌─────────────────┐         ┌─────────────────┐                     │
 │  │  Event Handler  │ ──1──►  │     GitHub      │                     │
 │  │  (creates job)  │         │ (job/* branch)  │                     │
 │  └────────▲────────┘         └────────┬────────┘                     │
 │           │                           │                              │
-│           │                           2 (triggers run-job.yml)    │
+│           │                           2 (triggers run-job.yml)       │
 │           │                           │                              │
 │           │                           ▼                              │
 │           │                  ┌─────────────────┐                     │
@@ -47,8 +47,8 @@
 │           │                           │                              │
 │           5 (Telegram notification)   │                              │
 │           └───────────────────────────┘                              │
-│                                                                       │
-└───────────────────────────────────────────────────────────────────────┘
+│                                                                      │
+└──────────────────────────────────────────────────────────────────────┘
 ```
 
 You talk to your bot on Telegram (or hit a webhook). The Event Handler creates a job branch. GitHub Actions spins up a Docker container with the Pi coding agent. The agent does the work, commits the results, and opens a PR. Auto-merge handles the rest. You get a Telegram notification when it's done.
