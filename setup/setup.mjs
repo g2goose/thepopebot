@@ -355,12 +355,16 @@ async function main() {
     const validateSpinner = ora('Validating bot token...').start();
     const validation = await validateBotToken(telegramToken);
 
-    if (!validation.valid) {
-      validateSpinner.fail(`Invalid token: ${validation.error}`);
-      telegramToken = null;
-    } else {
+    if (validation.valid) {
       validateSpinner.succeed(`Bot: @${validation.botInfo.username}`);
       telegramWebhookSecret = await generateTelegramWebhookSecret();
+    } else if (validation.networkError) {
+      validateSpinner.warn(`Could not verify token: ${validation.error}`);
+      printWarning('Network check skipped — proceeding with format-validated token');
+      telegramWebhookSecret = await generateTelegramWebhookSecret();
+    } else {
+      validateSpinner.fail(`Invalid token: ${validation.error}`);
+      telegramToken = null;
     }
   } else {
     printInfo('Skipped Telegram setup');

@@ -151,6 +151,9 @@ async function main() {
     const validation = await validateBotToken(token);
     if (validation.valid) {
       validateSpinner.succeed(`Bot: @${validation.botInfo.username}`);
+    } else if (validation.networkError) {
+      validateSpinner.warn(`Could not verify token: ${validation.error}`);
+      printWarning('Network check skipped — proceeding with format-validated token from .env');
     } else {
       validateSpinner.fail(`Invalid token in .env: ${validation.error}`);
       token = null;
@@ -180,19 +183,25 @@ async function main() {
       const validateSpinner = ora('Validating bot token...').start();
       const validation = await validateBotToken(token);
       if (!validation.valid) {
-        validateSpinner.fail(`Invalid token: ${validation.error}`);
         if (validation.networkError) {
+          validateSpinner.warn(`Cannot reach Telegram API: ${validation.error}`);
           console.log('');
           printWarning('Cannot reach the Telegram API. Common causes:');
-          printInfo('• No internet connection');
           printInfo('• Telegram is blocked on your network or by your ISP');
           printInfo('• A firewall or VPN is interfering');
           printInfo('• Try: curl https://api.telegram.org to test reachability');
           console.log('');
-        } else {
-          printInfo('Get a token from @BotFather on Telegram: https://t.me/BotFather');
-          printInfo('Message /newbot and follow the prompts.');
+          const proceed = await confirm('Proceed with this token anyway (skip API check)?');
+          if (proceed) {
+            tokenValid = true; // format was already validated by inquirer
+          } else {
+            token = null;
+          }
+          continue;
         }
+        validateSpinner.fail(`Invalid token: ${validation.error}`);
+        printInfo('Get a token from @BotFather on Telegram: https://t.me/BotFather');
+        printInfo('Message /newbot and follow the prompts.');
         const retry = await confirm('Try again?');
         if (!retry) {
           process.exit(1);
