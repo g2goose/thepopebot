@@ -12,7 +12,7 @@ import { setVariables } from './lib/github.mjs';
 import { setTelegramWebhook, validateBotToken, generateVerificationCode } from './lib/telegram.mjs';
 import { confirm, generateTelegramWebhookSecret } from './lib/prompts.mjs';
 import { updateEnvVariable } from './lib/auth.mjs';
-import { runVerificationFlow } from './lib/telegram-verify.mjs';
+import { runVerificationFlow, verifyRestart } from './lib/telegram-verify.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = join(__dirname, '..');
@@ -253,7 +253,14 @@ async function main() {
     console.log(chalk.dim('  • If using ') + chalk.cyan('npm run dev') + chalk.dim(': it auto-restarts — wait ~5 seconds.'));
     console.log(chalk.dim('  • If using ') + chalk.cyan('npm start') + chalk.dim(': press Ctrl+C and run it again.\n'));
 
-    await confirm('Press Enter once the server has restarted...');
+    let serverReady = false;
+    while (!serverReady) {
+      await confirm('Press Enter once the server has restarted...');
+      serverReady = await verifyRestart(ngrokUrl, env?.API_KEY);
+      if (!serverReady) {
+        printWarning('Server not reachable — make sure it fully restarted and try again.');
+      }
+    }
 
     const chatId = await runVerificationFlow(verificationCode);
 
