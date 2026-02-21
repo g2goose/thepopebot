@@ -57,14 +57,23 @@ export async function deleteTelegramWebhook(botToken) {
  */
 export async function validateBotToken(botToken) {
   try {
-    const response = await fetch(`https://api.telegram.org/bot${botToken}/getMe`);
+    const response = await fetch(`https://api.telegram.org/bot${botToken}/getMe`, {
+      signal: AbortSignal.timeout(10000),
+    });
     const result = await response.json();
     if (result.ok) {
       return { valid: true, botInfo: result.result };
     }
     return { valid: false, error: result.description };
   } catch (error) {
-    return { valid: false, error: error.message };
+    const isTimeout = error.name === 'TimeoutError' || error.name === 'AbortError';
+    return {
+      valid: false,
+      networkError: true,
+      error: isTimeout
+        ? 'Connection timed out (10s) — check your internet connection'
+        : 'Could not reach api.telegram.org — check your internet connection and firewall',
+    };
   }
 }
 

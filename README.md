@@ -18,7 +18,7 @@
 
 ## How It Works
 
-```
+```text
 ┌──────────────────────────────────────────────────────────────────────┐
 │                                                                      │
 │  ┌─────────────────┐         ┌─────────────────┐                     │
@@ -55,7 +55,7 @@ You talk to your bot on Telegram (or hit a webhook). The Event Handler creates a
 
 ---
 
-## Get FREE server time on Github!
+## Get FREE server time on Github
 
 | | thepopebot | Other platforms |
 |---|---|---|
@@ -103,15 +103,89 @@ npm run setup
 ```
 
 The wizard handles everything:
+
 - Checks prerequisites (Node.js, Git, GitHub CLI, ngrok)
 - Creates a GitHub Personal Access Token
 - Collects API keys (Anthropic required; OpenAI, Groq, and [Brave Search](https://api-dashboard.search.brave.com/app/keys) optional)
 - Sets GitHub repository secrets and variables
-- Sets up Telegram bot
-- Starts the server + ngrok, generates `event_handler/.env`
-- Registers webhooks and verifies everything works
+- Generates `event_handler/.env`
+- Sets up Telegram bot (if you provide a bot token — see below)
+- Starts the server + ngrok, registers webhooks and verifies everything works
+
+> **Telegram bot token**: Get one from [@BotFather](https://t.me/BotFather) before running setup. Message `/newbot`, follow the prompts, and copy the token it gives you. If you skip this step or skip Telegram during setup, run `npm run setup-telegram` afterwards (see below).
 
 **After setup, message your Telegram bot to create jobs!**
+
+---
+
+### If you skipped Telegram setup (or ngrok restarts)
+
+Run the Telegram-only wizard to configure or reconfigure your bot:
+
+**Terminal 1** — start the event handler:
+
+```bash
+cd event_handler && npm run dev
+```
+
+**Terminal 2** — start ngrok:
+
+```bash
+ngrok http 3000
+```
+
+**Terminal 3** — run the Telegram setup:
+
+```bash
+npm run setup-telegram
+```
+
+The wizard will ask for your ngrok URL, validate your bot token, register the webhook, and walk you through chat ID verification.
+
+> **Note**: ngrok assigns a new URL every time you restart it (free plan). When that happens, re-run `npm run setup-telegram` to update the webhook — it takes about 30 seconds.
+
+---
+
+## Troubleshooting
+
+### "Could not reach api.telegram.org" / "fetch failed" during bot token validation
+
+The setup wizard couldn't connect to the Telegram API. Test it yourself:
+
+```bash
+curl https://api.telegram.org
+```
+
+Common causes and fixes:
+
+| Symptom | Likely cause | Fix |
+|---------|-------------|-----|
+| curl also fails | No internet / DNS | Check your network connection |
+| curl works but wizard fails | Node.js SSL or IPv6 issue | Set `NODE_OPTIONS=--dns-result-order=ipv4first` before running |
+| Telegram blocked by ISP | Geo-restriction | Use a VPN or a remote server to run the event handler |
+
+**Quick fix for Node.js IPv6 fallback issues:**
+
+```bash
+NODE_OPTIONS=--dns-result-order=ipv4first npm run setup-telegram
+```
+
+### Bot responds to verification code but not to regular messages
+
+`TELEGRAM_CHAT_ID` is empty. Re-run `npm run setup-telegram` — the wizard will detect the missing chat ID and walk you through the verification step.
+
+### 401 errors hitting `/ping` during setup
+
+The server is still running with an old API key. Restart it after `npm run setup` writes a new `.env`:
+
+```bash
+# Ctrl+C the running server, then:
+cd event_handler && npm run dev
+```
+
+### ngrok URL changed
+
+Re-run `npm run setup-telegram`. It updates the GitHub webhook URL and re-registers the Telegram webhook automatically.
 
 ---
 

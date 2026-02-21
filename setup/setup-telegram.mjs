@@ -158,30 +158,55 @@ async function main() {
   }
 
   if (!token) {
-    const { inputToken } = await inquirer.prompt([
-      {
-        type: 'password',
-        name: 'inputToken',
-        message: 'Telegram bot token:',
-        mask: '*',
-        validate: (input) => {
-          if (!input) return 'Token is required';
-          if (!/^\d+:[A-Za-z0-9_-]+$/.test(input)) {
-            return 'Invalid format. Should be like 123456789:ABC-DEF...';
-          }
-          return true;
+    let tokenValid = false;
+    while (!tokenValid) {
+      const { inputToken } = await inquirer.prompt([
+        {
+          type: 'password',
+          name: 'inputToken',
+          message: 'Telegram bot token:',
+          mask: '*',
+          validate: (input) => {
+            if (!input) return 'Token is required';
+            if (!/^\d+:[A-Za-z0-9_-]+$/.test(input)) {
+              return 'Invalid format. Should be like 123456789:ABC-DEF...';
+            }
+            return true;
+          },
         },
-      },
-    ]);
-    token = inputToken;
+      ]);
+      token = inputToken;
 
-    const validateSpinner = ora('Validating bot token...').start();
-    const validation = await validateBotToken(token);
-    if (!validation.valid) {
-      validateSpinner.fail(`Invalid token: ${validation.error}`);
-      process.exit(1);
+      const validateSpinner = ora('Validating bot token...').start();
+      const validation = await validateBotToken(token);
+      if (!validation.valid) {
+        validateSpinner.fail(`Invalid token: ${validation.error}`);
+        if (validation.networkError) {
+          console.log('');
+          printWarning('Cannot reach the Telegram API. Common causes:');
+          printInfo('• No internet connection');
+          printInfo('• Telegram is blocked on your network or by your ISP');
+          printInfo('• A firewall or VPN is interfering');
+          printInfo('• Try: curl https://api.telegram.org to test reachability');
+          console.log('');
+        } else {
+          printInfo('Get a token from @BotFather on Telegram: https://t.me/BotFather');
+          printInfo('Message /newbot and follow the prompts.');
+        }
+        const retry = await confirm('Try again?');
+        if (!retry) {
+          process.exit(1);
+        }
+        token = null;
+        continue;
+      }
+      validateSpinner.succeed(`Bot: @${validation.botInfo.username}`);
+      tokenValid = true;
     }
-    validateSpinner.succeed(`Bot: @${validation.botInfo.username}`);
+
+    // Save the new token to .env
+    updateEnvVariable('TELEGRAM_BOT_TOKEN', token);
+    printSuccess('Telegram bot token saved to .env');
   }
 
   // Handle webhook secret
@@ -214,8 +239,12 @@ async function main() {
     const verificationCode = generateVerificationCode();
     updateEnvVariable('TELEGRAM_VERIFICATION', verificationCode);
 
-    console.log(chalk.yellow('\n  Waiting for server to restart with new verification code...\n'));
-    await new Promise(resolve => setTimeout(resolve, 3000));
+    console.log(chalk.bold.yellow('\n  Restart your event handler server now.\n'));
+    console.log(chalk.dim('  The server must load the new verification code from .env before you can verify.\n'));
+    console.log(chalk.dim('  • If using ') + chalk.cyan('npm run dev') + chalk.dim(': it auto-restarts — wait ~5 seconds.'));
+    console.log(chalk.dim('  • If using ') + chalk.cyan('npm start') + chalk.dim(': press Ctrl+C and run it again.\n'));
+
+    await confirm('Press Enter once the server has restarted...');
 
     const chatId = await runVerificationFlow(verificationCode);
 
