@@ -31,7 +31,7 @@
     "name": "ping-status",
     "schedule": "*/5 * * * *",
     "type": "http",
-    "url": "https://example.com/status",
+    "url": "https://TODO-replace-with-your-status-endpoint",
     "method": "POST",
     "vars": { "source": "heartbeat" },
     "enabled": false
@@ -40,7 +40,7 @@
     "name": "health-check",
     "schedule": "*/10 * * * *",
     "type": "http",
-    "url": "https://example.com/health",
+    "url": "https://TODO-replace-with-your-health-endpoint",
     "method": "GET",
     "enabled": false
   },
@@ -49,6 +49,6 @@
     "schedule": "0 14 * * 1-5",
     "type": "agent",
     "job": "Read the file at operating_system/FINANCIAL_ADVISOR/FINANCIAL_ADVISOR.md and complete the tasks described there.",
-    "enabled": true
+    "enabled": false
   }
 ]

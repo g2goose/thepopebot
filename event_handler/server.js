@@ -1,13 +1,15 @@
 const express = require('express');
 const helmet = require('helmet');
+const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
+const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
 const { createJob } = require('./tools/create-job');
 const { loadCrons } = require('./cron');
 const { loadTriggers } = require('./triggers');
-const { setWebhook, sendMessage, formatJobNotification, downloadFile, reactToMessage, startTypingIndicator } = require('./tools/telegram');
+const { setWebhook, sendMessage, downloadFile, reactToMessage, startTypingIndicator } = require('./tools/telegram');
 const { isWhisperEnabled, transcribeAudio } = require('./tools/openai');
 const { chat } = require('./claude');
 const { toolDefinitions, toolExecutors } = require('./claude/tools');
@@ -23,18 +25,35 @@ app.use(express.json());
 
 const { API_KEY, TELEGRAM_WEBHOOK_SECRET, TELEGRAM_BOT_TOKEN, GH_WEBHOOK_SECRET, GH_OWNER, GH_REPO, TELEGRAM_CHAT_ID, TELEGRAM_VERIFICATION } = process.env;
 
+if (!TELEGRAM_WEBHOOK_SECRET) {
+  console.warn('WARNING: TELEGRAM_WEBHOOK_SECRET is not set — /telegram/webhook is unauthenticated');
+}
+if (!GH_WEBHOOK_SECRET) {
+  console.warn('WARNING: GH_WEBHOOK_SECRET is not set — /github/webhook is unauthenticated');
+}
+
 // Bot token from env, can be overridden by /telegram/register
 let telegramBotToken = TELEGRAM_BOT_TOKEN || null;
 
 // Routes that have their own authentication
 const PUBLIC_ROUTES = ['/telegram/webhook', '/github/webhook'];
 
+// Rate limiting
+const apiLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 100, standardHeaders: true, legacyHeaders: false });
+app.use('/webhook', apiLimiter);
+app.use('/telegram/webhook', apiLimiter);
+
 // Global x-api-key auth (skip for routes with their own auth)
 app.use((req, res, next) => {
   if (PUBLIC_ROUTES.includes(req.path)) {
     return next();
   }
-  if (req.headers['x-api-key'] !== API_KEY) {
+  const provided = req.headers['x-api-key'] || '';
+  const expected = API_KEY || '';
+  const safe =
+    provided.length === expected.length &&
+    crypto.timingSafeEqual(Buffer.from(provided), Buffer.from(expected));
+  if (!API_KEY || !safe) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
   next();

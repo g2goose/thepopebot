@@ -96,6 +96,8 @@ jobs:
             FILE_OK=false
             for prefix in "${PREFIXES[@]}"; do
               compare="${prefix#/}"
+              # Require directory boundary so "logs" doesn't match "logs_malicious.js"
+              [[ "$compare" != */ ]] && compare="${compare}/"
               if [[ "$file" == "$compare"* ]]; then
                 FILE_OK=true
                 break

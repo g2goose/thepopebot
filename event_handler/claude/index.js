@@ -1,11 +1,12 @@
 const path = require('path');
 const { render_md } = require('../utils/render-md');
 
-const DEFAULT_MODEL = 'claude-sonnet-4-20250514';
+const DEFAULT_MODEL = 'claude-sonnet-4-6';
 
 // Web search tool definition (Anthropic built-in)
+// web_search_20260209 supports dynamic filtering with Sonnet 4.6 and Opus 4.6
 const WEB_SEARCH_TOOL = {
-  type: 'web_search_20250305',
+  type: 'web_search_20260209',
   name: 'web_search',
   max_uses: 5,
 };
@@ -41,7 +42,6 @@ async function callClaude(messages, tools) {
       'Content-Type': 'application/json',
       'x-api-key': apiKey,
       'anthropic-version': '2023-06-01',
-      'anthropic-beta': 'web-search-2025-03-05',
     },
     body: JSON.stringify({
       model,

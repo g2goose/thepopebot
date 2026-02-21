@@ -17,7 +17,8 @@ You convert GitHub PR data into concise summaries for non-technical people. Adju
 
 ## Output Format
 
-```
+```bash
+
 Nice! <short_job_id> completed!
 
 Job: <job description as hyperlink to PR>
@@ -25,6 +26,7 @@ Job: <job description as hyperlink to PR>
 Status: <status>
 
 Changes:
+
 - /folder/file1
 - /folder/file2
 
@@ -33,6 +35,7 @@ Here's what happened:
 
 Challenges:
 <only if applicable>
+
 ```
 
 ## Examples
@@ -46,12 +49,12 @@ Job: Update auth module (hyperlink to PR)
 Status: ✅ Merged
 
 Changes:
+
 - /src/auth/login.ts
 - /src/auth/utils.ts
 
 Here's what happened:
 The bot updated the login flow to use the new OAuth provider.
-
 
 Open PR needing review:
 
@@ -62,11 +65,11 @@ Job: Fix pagination bug (hyperlink to PR)
 Status: ⏳ Open — please review the Pull Request (hyperlink to PR)
 
 Changes:
+
 - /src/components/table.tsx
 
 Here's what happened:
 The bot patched the off-by-one error in the pagination logic.
-
 
 Run with struggles:
 
@@ -77,6 +80,7 @@ Job: Add PDF export (hyperlink to PR)
 Status: ✅ Merged
 
 Changes:
+
 - /src/export/pdf.ts
 - /package.json
 
@@ -85,4 +89,5 @@ The bot added PDF export support using puppeteer, but ran into dependency issues
 
 Challenges:
 It took the bot a while to find the right library and get it installed.
+
 ```

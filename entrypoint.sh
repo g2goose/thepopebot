@@ -19,7 +19,10 @@ sleep 2
 # These are filtered from LLM's bash subprocess by env-sanitizer extension
 if [ -n "$SECRETS" ]; then
     SECRETS_JSON=$(echo "$SECRETS" | base64 -d)
-    eval $(echo "$SECRETS_JSON" | jq -r 'to_entries | .[] | "export \(.key)=\"\(.value)\""')
+    while IFS= read -r key; do
+        value=$(echo "$SECRETS_JSON" | jq -r --arg k "$key" '.[$k]')
+        export "$key"="$value"
+    done < <(echo "$SECRETS_JSON" | jq -r 'keys[]')
     export SECRETS="$SECRETS_JSON"  # Keep decoded for extension to parse
 fi
 
@@ -27,7 +30,10 @@ fi
 # These are NOT filtered - LLM can access these (browser logins, skill API keys, etc.)
 if [ -n "$LLM_SECRETS" ]; then
     LLM_SECRETS_JSON=$(echo "$LLM_SECRETS" | base64 -d)
-    eval $(echo "$LLM_SECRETS_JSON" | jq -r 'to_entries | .[] | "export \(.key)=\"\(.value)\""')
+    while IFS= read -r key; do
+        value=$(echo "$LLM_SECRETS_JSON" | jq -r --arg k "$key" '.[$k]')
+        export "$key"="$value"
+    done < <(echo "$LLM_SECRETS_JSON" | jq -r 'keys[]')
 fi
 
 # Git setup - derive identity from GitHub token
@@ -58,7 +64,7 @@ LOG_DIR="/job/logs/${JOB_ID}"
 mkdir -p "${LOG_DIR}"
 
 # 1. Build system prompt from operating_system MD files
-SYSTEM_FILES=("SOUL.md" "AGENT.md")
+SYSTEM_FILES=("SOUL.md")
 > /job/.pi/SYSTEM.md
 for i in "${!SYSTEM_FILES[@]}"; do
     cat "/job/operating_system/${SYSTEM_FILES[$i]}" >> /job/.pi/SYSTEM.md
@@ -86,13 +92,7 @@ git add -f "${LOG_DIR}"
 git commit -m "thepopebot: job ${JOB_ID}" || true
 git push origin
 
-# 3. Merge (pi has memory of job via session)
-#if [ -n "$REPO_URL" ] && [ -f "/job/MERGE_JOB.md" ]; then
-#    echo "MERGED"
-#    pi -p "$(cat /job/MERGE_JOB.md)" --session-dir "${LOG_DIR}" --continue
-#fi
-
-# 5. Create PR (auto-merge handled by GitHub Actions workflow)
+# 3. Create PR (auto-merge handled by GitHub Actions workflow)
 gh pr create --title "thepopebot: job ${JOB_ID}" --body "Automated job" --base main || true
 
 # Cleanup

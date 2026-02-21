@@ -117,27 +117,6 @@ async function sendMessage(botToken, chatId, text, options = {}) {
 }
 
 /**
- * Format a job notification message
- * @param {Object} params - Notification parameters
- * @param {string} params.jobId - Full job ID
- * @param {boolean} params.success - Whether job succeeded
- * @param {string} params.summary - Job summary text
- * @param {string} params.prUrl - PR URL
- * @returns {string} Formatted HTML message
- */
-function formatJobNotification({ jobId, success, summary, prUrl }) {
-  const emoji = success ? '✅' : '⚠️';
-  const status = success ? 'complete' : 'had issues';
-  const shortId = jobId.slice(0, 8);
-
-  return `${emoji} <b>Job ${shortId}</b> ${status}
-
-${escapeHtml(summary)}
-
-<a href="${prUrl}">View PR</a>`;
-}
-
-/**
  * Download a file from Telegram servers
  * @param {string} botToken - Bot token from @BotFather
  * @param {string} fileId - Telegram file_id
@@ -215,7 +194,6 @@ module.exports = {
   sendMessage,
   smartSplit,
   escapeHtml,
-  formatJobNotification,
   downloadFile,
   reactToMessage,
   startTypingIndicator,

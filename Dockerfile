@@ -37,7 +37,8 @@ RUN npm install -g @mariozechner/pi-coding-agent
 RUN mkdir -p /root/.pi/agent
 
 # Clone pi-skills and install browser-tools (includes Puppeteer + Chromium)
-RUN git clone https://github.com/badlogic/pi-skills.git /pi-skills
+RUN git clone https://github.com/badlogic/pi-skills.git /pi-skills && \
+    git -C /pi-skills checkout 75d32a382b0c8aafce356d68e17d2dc94c0c953b
 WORKDIR /pi-skills/browser-tools
 RUN npm install
 WORKDIR /pi-skills/brave-search
