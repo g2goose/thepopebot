@@ -5,44 +5,44 @@ thepopebot uses a two-layer architecture:
 1. **Event Handler** - Node.js server for webhooks, Telegram chat, and cron scheduling
 2. **Docker Agent** - Pi coding agent container for autonomous task execution
 
-```
-┌───────────────────────────────────────────────────────────────────────┐
-│                                                                       │
-│  ┌─────────────────┐         ┌─────────────────┐                     │
-│  │  Event Handler  │ ──1──►  │     GitHub      │                     │
-│  │  (creates job)  │         │ (job/* branch)  │                     │
-│  └────────▲────────┘         └────────┬────────┘                     │
-│           │                           │                              │
-│           │                           2 (triggers run-job.yml)    │
-│           │                           │                              │
-│           │                           ▼                              │
-│           │                  ┌─────────────────┐                     │
-│           │                  │  Docker Agent   │                     │
-│           │                  │  (runs Pi, PRs) │                     │
-│           │                  └────────┬────────┘                     │
-│           │                           │                              │
-│           │                           3 (creates PR)                 │
-│           │                           │                              │
-│           │                           ▼                              │
-│           │                  ┌─────────────────┐                     │
-│           │                  │     GitHub      │                     │
-│           │                  │   (PR opened)   │                     │
-│           │                  └────────┬────────┘                     │
-│           │                           │                              │
-│           │                           4a (update-event-handler.yml)  │
-│           │                           4b (auto-merge.yml)            │
-│           │                           │                              │
-│           5 (Telegram notification)   │                              │
-│           └───────────────────────────┘                              │
-│                                                                       │
-└───────────────────────────────────────────────────────────────────────┘
+```text
+┌─────────────────────────────────────────────────────────────────────┐
+│                                                                     │
+│  ┌─────────────────┐         ┌─────────────────┐                    │
+│  │  Event Handler  │ ──1──►  │     GitHub      │                    │
+│  │  (creates job)  │         │ (job/* branch)  │                    │
+│  └────────▲────────┘         └────────┬────────┘                    │
+│           │                           │                             │
+│           │                           2 (triggers run-job.yml)      │
+│           │                           │                             │
+│           │                           ▼                             │
+│           │                  ┌─────────────────┐                    │
+│           │                  │  Docker Agent   │                    │
+│           │                  │  (runs Pi, PRs) │                    │
+│           │                  └────────┬────────┘                    │
+│           │                           │                             │
+│           │                           3 (creates PR)                │
+│           │                           │                             │
+│           │                           ▼                             │
+│           │                  ┌─────────────────┐                    │
+│           │                  │     GitHub      │                    │
+│           │                  │   (PR opened)   │                    │
+│           │                  └────────┬────────┘                    │
+│           │                           │                             │
+│           │                           4a (update-event-handler.yml) │
+│           │                           4b (auto-merge.yml)           │
+│           │                           │                             │
+│           5 (Telegram notification)   │                             │
+│           └───────────────────────────┘                             │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
 ## File Structure
 
-```
+```text
 /
 ├── .github/workflows/
 │   ├── auto-merge.yml       # Auto-merges job PRs (checks AUTO_MERGE + ALLOWED_PATHS)
@@ -160,6 +160,7 @@ curl -X POST http://localhost:3000/telegram/register \
 The container executes tasks autonomously using the Pi coding agent.
 
 **Container includes:**
+
 - Node.js 22
 - Pi coding agent
 - Playwright + Chromium (headless browser, CDP port 9222)

@@ -35,6 +35,7 @@ Message your bot directly to chat or create jobs. The bot uses Claude to underst
 Send voice notes to your bot and they'll be transcribed using OpenAI Whisper.
 
 **Requirements:**
+
 - `OPENAI_API_KEY` in your `.env` file
 
 The bot automatically detects voice messages and transcribes them before processing.
@@ -155,5 +156,6 @@ No special Docker flags required. Works on any host.
 The env-sanitizer protects against the **AI agent** accessing secrets through bash. Extension code itself can access `process.env` directly - this is by design.
 
 **Best practices:**
+
 - Don't create tools that echo environment variables to the agent
 - Review extension code before adding to your agent

@@ -1,3 +1,45 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Development Commands
+
+All event handler work happens in the `event_handler/` subdirectory, which has its own `package.json`.
+
+```bash
+# Install event handler dependencies
+cd event_handler && npm install
+
+# Run the event handler (production)
+cd event_handler && npm start
+
+# Run in dev mode with hot reload (watches JS, JSON, .env, and ../operating_system/)
+cd event_handler && npm run dev
+
+# Run the interactive setup wizard (from repo root)
+npm run setup
+
+# Configure Telegram integration
+npm run setup-telegram
+```
+
+Copy `event_handler/.env.example` to `event_handler/.env` and fill in values before running locally.
+
+There are no automated tests in this project.
+
+## Coding Guidelines (Event Handler)
+
+**Always use `render_md` when reading `.md` files from `operating_system/`.** Never use raw `fs.readFileSync` for markdown — `render_md` resolves `{{filepath}}` includes.
+
+```js
+const { render_md } = require('./utils/render-md');
+const content = render_md(path.join(__dirname, '..', 'operating_system', 'SOME_FILE.md'));
+```
+
+This applies to any markdown file loaded as a prompt or system message (CHATBOT.md, JOB_SUMMARY.md, etc.).
+
+---
+
 # thepopebot - AI Agent Template
 
 This document explains the thepopebot codebase for AI assistants working on this project.
@@ -8,22 +50,22 @@ thepopebot is a **template repository** for creating custom autonomous AI agents
 
 ## Two-Layer Architecture
 
-```
-┌──────────────────────────────────────────────────────────────────────────┐
-│                          thepopebot Architecture                          │
-├──────────────────────────────────────────────────────────────────────────┤
-│                                                                          │
-│   ┌──────────────────┐                                                   │
-│   │  Event Handler   │                                                   │
-│   │  ┌────────────┐  │         1. create-job                            │
-│   │  │  Telegram  │  │ ─────────────────────────►  ┌──────────────────┐ │
-│   │  │   Cron     │  │                             │      GitHub      │ │
-│   │  │   Chat     │  │ ◄─────────────────────────  │  (job/* branch)  │ │
-│   │  └────────────┘  │   5. update-event-handler.yml calls   └────────┬─────────┘ │
-│   │                  │      /github/webhook                 │           │
+```text
+┌─────────────────────────────────────────────────────────────────────────┐
+│                          thepopebot Architecture                        │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│   ┌──────────────────┐                                                  │
+│   │  Event Handler   │                                                  │
+│   │  ┌────────────┐  │         1. create-job       ┌──────────────────┐ │
+│   │  │  Telegram  │  │ ─────────────────────────►  │      GitHub      │ │
+│   │  │   Cron     │  │                             │  (job/* branch)  │ │
+│   │  │   Chat     │  │ ◄─────────────────────────  └────────┬─────────┘ │
+│   │  └────────────┘  │   5. update-event-handler.yml        │           │
+│   │                  │       calls /github/webhook          │           │
 │   └──────────────────┘                                      │           │
 │            │                                                │           │
-│            │                           2. run-job.yml    │           │
+│            │                           2. run-job.yml       │           │
 │            ▼                              triggers          │           │
 │   ┌──────────────────┐                                      │           │
 │   │ Telegram notifies│                                      ▼           │
@@ -59,7 +101,7 @@ thepopebot is a **template repository** for creating custom autonomous AI agents
 
 ## Directory Structure
 
-```
+```text
 /
 ├── .github/workflows/
 │   ├── auto-merge.yml       # Auto-merges job PRs (checks AUTO_MERGE + ALLOWED_PATHS)
@@ -165,6 +207,7 @@ This keeps config files clean and makes instructions easier to read and edit. Av
 #### Type: `command`
 
 Runs a shell command directly on the event handler server. No Docker container, no GitHub branch, no LLM. Each system has its own working directory for scripts:
+
 - **Crons**: `event_handler/cron/`
 - **Triggers**: `event_handler/triggers/`
 
@@ -173,10 +216,12 @@ Runs a shell command directly on the event handler server. No Docker container, 
 Makes an HTTP request to an external URL. No Docker container, no LLM. Useful for forwarding webhooks, calling external APIs, or pinging health endpoints.
 
 **Outgoing body logic:**
+
 - `GET` requests skip the body entirely
 - `POST` (default) sends `{ ...vars }` if no incoming data, or `{ ...vars, data: <incoming payload> }` when triggered by a webhook
 
 **Cron example** (no incoming data — just makes a scheduled request):
+
 ```json
 {
   "name": "ping-status",
@@ -187,9 +232,11 @@ Makes an HTTP request to an external URL. No Docker container, no LLM. Useful fo
   "vars": { "source": "heartbeat" }
 }
 ```
+
 Sends: `{ "source": "heartbeat" }`
 
 **Trigger example** (forwards incoming payload):
+
 ```json
 {
   "name": "forward-github",
@@ -199,6 +246,7 @@ Sends: `{ "source": "heartbeat" }`
   ]
 }
 ```
+
 Sends: `{ "source": "github", "data": { ...req.body... } }`
 
 **`http` action fields:**
@@ -290,6 +338,7 @@ Webhook triggers are defined in `operating_system/TRIGGERS.json` and loaded by `
 #### Template tokens
 
 Both `job` and `command` strings support the same templates:
+
 - `{{body}}` — full request body as JSON
 - `{{body.field}}` — a specific field from the body
 - `{{query}}` / `{{query.field}}` — query string params
@@ -313,6 +362,7 @@ Both `job` and `command` strings support the same templates:
 ## Docker Agent Layer
 
 The Dockerfile creates a container with:
+
 - **Node.js 22** (Bookworm slim)
 - **Pi coding agent** (`@mariozechner/pi-coding-agent`)
 - **Playwright + Chromium** (headless browser automation)
@@ -437,10 +487,10 @@ To create your own agent:
 
 1. **GitHub Secrets** - Set `SECRETS` and optionally `LLM_SECRETS` with your API keys
 2. **operating_system/SOUL.md** - Customize personality and identity
-4. **operating_system/CHATBOT.md** - Configure Telegram chat behavior
-5. **operating_system/CRONS.json** - Define scheduled jobs
-6. **logs/<JOB_ID>/job.md** - Task description (created automatically per job)
-7. **.pi/skills/** - Add custom skills for the agent
+3. **operating_system/CHATBOT.md** - Configure Telegram chat behavior
+4. **operating_system/CRONS.json** - Define scheduled jobs
+5. **logs/<JOB_ID>/job.md** - Task description (created automatically per job)
+6. **.pi/skills/** - Add custom skills for the agent
 
 ## The Operating System
 

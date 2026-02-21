@@ -13,6 +13,7 @@ The Event Handler Express server (`event_handler/server.js`) is being deployed t
 **File:** `event_handler/server.js`
 
 **Changes:**
+
 - Install `express-rate-limit`
 - Add a global limiter (e.g., 100 req/min per IP)
 - Add stricter per-endpoint limiters:
@@ -64,6 +65,7 @@ Apply the same fix to Telegram secret check (line 95) and GitHub webhook secret 
 **File:** `event_handler/server.js:93, 240`
 
 **Changes:**
+
 - If `TELEGRAM_WEBHOOK_SECRET` is not set, reject all `/telegram/webhook` requests (log a startup warning)
 - If `GH_WEBHOOK_SECRET` is not set, reject all `/github/webhook` requests (log a startup warning)
 - Use `safeCompare` for both (from fix #2)
@@ -77,6 +79,7 @@ Apply the same fix to Telegram secret check (line 95) and GitHub webhook secret 
 **File:** `event_handler/server.js:21`
 
 **Change:**
+
 ```js
 app.use(express.json({ limit: '50kb' }));
 ```
@@ -90,6 +93,7 @@ app.use(express.json({ limit: '50kb' }));
 **File:** `event_handler/server.js:60-61`
 
 **Changes:**
+
 - Validate `job` is a string
 - Enforce max length (e.g., 10,000 chars)
 
@@ -151,6 +155,7 @@ Note: `execFile` with `/bin/sh -c` still runs in a shell, but adding the `timeou
 **File:** `.github/workflows/auto-merge.yml:98-99`
 
 **Change:**
+
 ```bash
 compare="${prefix#/}"
 # Ensure prefix comparison includes directory boundary
@@ -166,6 +171,7 @@ if [[ "$file" == "$compare"/* ]] || [[ "$file" == "$compare" ]]; then
 **Files:** `event_handler/tools/github.js:22`
 
 **Change:** Log the full error, throw a generic one:
+
 ```js
 if (!res.ok) {
   const error = await res.text();
@@ -185,6 +191,7 @@ The Express error handler at `server.js:290` already catches unhandled errors an
 **File:** `event_handler/server.js` (new middleware)
 
 **Change:** Add minimal structured request logging:
+
 ```js
 app.use((req, res, next) => {
   const start = Date.now();
@@ -210,6 +217,7 @@ app.use((req, res, next) => {
 **File:** `event_handler/utils/render-md.js:31`
 
 **Change:** Add a bounds check:
+
 ```js
 const includeResolved = path.resolve(REPO_ROOT, includePath.trim());
 if (!includeResolved.startsWith(REPO_ROOT)) {
@@ -227,6 +235,7 @@ if (!includeResolved.startsWith(REPO_ROOT)) {
 **File:** `Dockerfile`
 
 **Change:** Add a non-root user after installing system dependencies:
+
 ```dockerfile
 RUN useradd -m -u 1000 agent
 # ... (keep installs as root) ...
@@ -244,6 +253,7 @@ Note: This requires adjusting Chrome cache paths and the `/job` workdir ownershi
 **File:** `Dockerfile:40`
 
 **Change:**
+
 ```dockerfile
 RUN git clone https://github.com/badlogic/pi-skills.git /pi-skills && \
     cd /pi-skills && git checkout <COMMIT_SHA>

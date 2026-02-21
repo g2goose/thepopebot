@@ -69,12 +69,14 @@ If you're deploying to a platform where you can't run the setup script (Vercel, 
    - `TELEGRAM_VERIFICATION` - A verification code like `verify-abc12345`
 
 2. **Deploy and register the webhook:**
+
    ```bash
    curl -X POST https://your-app.vercel.app/telegram/register \
      -H "Content-Type: application/json" \
      -H "x-api-key: YOUR_API_KEY" \
      -d '{"bot_token": "YOUR_BOT_TOKEN", "webhook_url": "https://your-app.vercel.app/telegram/webhook"}'
    ```
+
    This registers your webhook with the secret from your env.
 
 3. **Get your chat ID:**

@@ -32,17 +32,20 @@ Path prefixes are matched from the repo root. A leading `/` is optional (`logs` 
 ## Examples
 
 Allow all agent changes to auto-merge (original behavior):
+
 ```
 AUTO_MERGE = (unset)
 ALLOWED_PATHS = /
 ```
 
 Require manual review for everything:
+
 ```
 AUTO_MERGE = false
 ```
 
 Only auto-merge log changes:
+
 ```
 ALLOWED_PATHS = /logs
 ```

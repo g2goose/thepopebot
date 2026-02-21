@@ -23,6 +23,7 @@ Files: `bash.ts`, `read.ts`, `write.ts`, `edit.ts` (plus `ls.ts`, `grep.ts`, `fi
 **What they are**: A folder containing a `SKILL.md` file and optionally script files. The LLM teaches itself how to use them by reading the SKILL.md, then runs the scripts via the **existing bash tool**. No new tools are registered. No TypeScript. No build step.
 
 **Where they live**:
+
 - `~/.pi/agent/skills/` (global, available in all projects)
 - `.pi/skills/` (project-level)
 - Installed via Pi packages
@@ -54,6 +55,7 @@ brave-search/
 ```
 
 **SKILL.md contents**:
+
 ```markdown
 ---
 name: brave-search
@@ -76,7 +78,7 @@ cd {baseDir} && npm install
 
 `{baseDir}` is replaced at runtime with the actual path to the skill folder.
 
-**Setup**: You run `npm install` once in the skill directory. The `package.json` declares what dependencies the scripts need. You also need to set `BRAVE_API_KEY` as an environment variable (get one from https://api-dashboard.search.brave.com/register).
+**Setup**: You run `npm install` once in the skill directory. The `package.json` declares what dependencies the scripts need. You also need to set `BRAVE_API_KEY` as an environment variable (get one from <https://api-dashboard.search.brave.com/register>).
 
 **The skill IS the bundle** — the SKILL.md, the code files, and the package.json all live in one directory. You don't need to go find separate pieces.
 
@@ -116,6 +118,7 @@ Requires a visible Chrome window with remote debugging enabled.
 **This is why extensions can protect secrets**: The extension code reads credentials from memory/files in the Node.js process. The LLM only sees the tool name and the returned results, never the credentials. Skills can't do this because the LLM is the one running bash and has access to everything bash has access to.
 
 **Where they live**:
+
 - `~/.pi/agent/extensions/` (global, auto-discovered)
 - `.pi/extensions/` (project-level)
 - Loaded explicitly with `pi --extension /path/to/extension.ts`
@@ -143,6 +146,7 @@ export default function (pi: ExtensionAPI) {
 ```
 
 **Key capabilities**:
+
 - `pi.registerTool()` — add new tools the LLM can call (appear alongside the built-in 4)
 - `pi.setBashSpawnHook()` — intercept/modify bash commands before execution
 - `pi.on("tool_call")` — intercept or block any tool call
@@ -227,12 +231,12 @@ If a security extension strips environment variables from `process.env` (to hide
 
 | Resource | URL |
 |----------|-----|
-| Pi repo | https://github.com/badlogic/pi-mono |
-| Pi coding agent | https://github.com/badlogic/pi-mono/tree/main/packages/coding-agent |
-| Built-in tools source | https://github.com/badlogic/pi-mono/tree/main/packages/coding-agent/src/core/tools/ |
-| Extensions docs | https://github.com/badlogic/pi-mono/blob/main/packages/coding-agent/docs/extensions.md |
-| Skills docs | https://github.com/badlogic/pi-mono/blob/main/packages/coding-agent/docs/skills.md |
-| Example extensions (50+) | https://github.com/badlogic/pi-mono/tree/main/packages/coding-agent/examples/extensions |
-| Pi skills repo | https://github.com/badlogic/pi-skills |
-| Pi website | https://shittycodingagent.ai/ |
-| ASRT (sandbox runtime) | https://github.com/anthropic-experimental/sandbox-runtime |
+| Pi repo | <https://github.com/badlogic/pi-mono> |
+| Pi coding agent | <https://github.com/badlogic/pi-mono/tree/main/packages/coding-agent> |
+| Built-in tools source | <https://github.com/badlogic/pi-mono/tree/main/packages/coding-agent/src/core/tools/> |
+| Extensions docs | <https://github.com/badlogic/pi-mono/blob/main/packages/coding-agent/docs/extensions.md> |
+| Skills docs | <https://github.com/badlogic/pi-mono/blob/main/packages/coding-agent/docs/skills.md> |
+| Example extensions (50+) | <https://github.com/badlogic/pi-mono/tree/main/packages/coding-agent/examples/extensions> |
+| Pi skills repo | <https://github.com/badlogic/pi-skills> |
+| Pi website | <https://shittycodingagent.ai/> |
+| ASRT (sandbox runtime) | <https://github.com/anthropic-experimental/sandbox-runtime> |
