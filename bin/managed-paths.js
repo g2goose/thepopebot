@@ -9,6 +9,11 @@ export const MANAGED_PATHS = [
   '.dockerignore',
   '.gitignore',
   'CLAUDE.md',
+  'config/CLAUDE.md',
+  'skills/CLAUDE.md',
+  'cron/CLAUDE.md',
+  'triggers/CLAUDE.md',
+  'docs/CLAUDE.md',
 ];
 
 export function isManaged(relPath) {
